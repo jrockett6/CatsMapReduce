@@ -12,8 +12,8 @@ object Run extends IOApp {
         case _ => ()
       }
       argMap = parseArgs(args)
-      z <- shard(argMap("--f").asInstanceOf[String], argMap("--n").asInstanceOf[Int])
-      _ <- IO(println(z))
+      shards <- shard(argMap("--f").asInstanceOf[String], argMap("--n").asInstanceOf[Int])
+      _ <- Master.run(shards)
     } yield ExitCode.Success
 }
 

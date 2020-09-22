@@ -3,3 +3,4 @@ project
 .idea
 src/main/scala/worksheet.sc
 *.DS_Store
+resources/*

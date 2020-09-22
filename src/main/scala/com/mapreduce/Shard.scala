@@ -16,7 +16,7 @@ object Shard {
    *
    * TODO: Parse file prematurely to parallelize file copying with cats-effect fibers.
    */
-  def shard(inFileName: String, nWorkers: Int): IO[Long] = {
+  def shard(inFileName: String, nWorkers: Int): IO[List[String]] = {
     val inFile = new File(inFileName)
     val shardLength = math.ceil(inFile.length.toFloat / nWorkers.toFloat).toInt
 
@@ -36,16 +36,17 @@ object Shard {
           }
       } yield tot
 
-    def split(br: BufferedReader, shardCount: Int, bytesRead: Long, bytesToRead: Long): IO[Long] = {
-      if (bytesRead >= bytesToRead) IO(bytesRead)
+    def split(br: BufferedReader, shardCount: Int, bytesRead: Long, bytesToRead: Long, shardNames: List[String]): IO[List[String]] = {
+      if (bytesRead >= bytesToRead) IO(shardNames)
       else {
-        val outFile = new File(basePath + "shard" + shardCount.toString)
+        val shardName = basePath + "shard" + shardCount.toString
+        val outFile = new File(shardName)
         fileWriter(outFile)
           .use(fos => writeShard(br, fos, 0, shardLength)
-            >>= (n => split(br, shardCount + 1, bytesRead + n, bytesToRead)))
+            >>= (n => split(br, shardCount + 1, bytesRead + n, bytesToRead, shardNames.prepended(shardName))))
       }
     }
 
-    fileReader(inFile).use(br => split(br, 0, 0, inFile.length))
+    fileReader(inFile).use(br => split(br, 0, 0, inFile.length, List[String]()))
   }
 }
