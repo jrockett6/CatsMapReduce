@@ -2,16 +2,7 @@ package com.mapreduce
 
 import java.io.{BufferedReader, File, FileOutputStream, OutputStream, FileReader}
 
-import cats._
-import cats.implicits._
-
-import cats.syntax._
-import fs2._
-//import fs2.{Pipe, Stream}
-import fs2.concurrent.Queue
-import cats.data.{NonEmptyList => Nel}
-import cats.effect.{IO, Resource, Concurrent}
-import cats.effect.concurrent.Ref
+import cats.effect.{IO, Resource}
 
 object Utils {
   def fileReader(f: File): Resource[IO, BufferedReader] =

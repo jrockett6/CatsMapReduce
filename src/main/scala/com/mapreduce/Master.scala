@@ -1,7 +1,8 @@
 package com.mapreduce
 
 import cats.implicits._
-import cats.effect.{Async, ContextShift, IO, Resource}
+import cats.effect.{ContextShift, IO, Resource}
+import fs2.Stream
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
@@ -25,34 +26,42 @@ object Master {
      * intermediate files.
      * Returns list of intermediate files.
      */
-    def map(shardFiles: List[String]): IO[List[List[String]]] =
-      getExecutionContext.use { ec =>
-        shardFiles.zipWithIndex.map(a => {
-          val mapper = Mapper(a._1, a._2, shardFiles.length)
-          contextShift.evalOn(ec)(mapper.map)
-        }).sequence
+    def map(shardFiles: List[String]): IO[List[List[String]]] = getExecutionContext.use { ec =>
+      shardFiles
+        .zipWithIndex
+        .map { case (file, n) => {
+          val mapper = Mapper(file, n, shardFiles.length)
+          contextShift.evalOn(ec)(mapper.map) } }
+        .sequence
       }
 
     /**
-     * Combine results of intermediate files, aggregating the values, and
-     * calls reduce with the resulting map.
+     * Combine results of intermediate files, passing the resulting fs2 stream to reducers
      */
-    def combine(intFiles: List[String]): IO[Map[String, Any]] = ???
+    def shuffle(intFiles: List[List[String]]): List[Stream[IO, String]] =
+      intFiles
+        .flatten
+        .groupBy(_.takeRight(2))
+        .map { case (_, intFileNames) => Shuffler(intFileNames).shuffle }
+        .toList
 
     /**
      * Starts a reduce worker in a new fiber.
-      */
-    def reduce(reduceMap: Map[String, Any]): IO[Unit] = ???
-
+     */
+    def reduce(intStreams: List[Stream[IO, String]]): IO[List[String]] = getExecutionContext.use { ec =>
+      intStreams
+        .zipWithIndex
+        .map { case (stream, n) => {
+          val reducer = Reducer(stream, n)
+          contextShift.evalOn(ec)(reducer.reduce) } }
+        .sequence
+    }
 
     for {
       intFiles <- map(shardFiles.reverse)
-      _ <- IO(println(intFiles))
-    } yield intFiles
-//    for {
-//      intFiles <- map(shardFiles)
-//      _ <- combine(intFiles)
-//          .map(reduce)
-//    } yield ()
-    }
+      intStreams = shuffle(intFiles)
+      resFiles <- reduce(intStreams)
+      _ <- IO(println(resFiles))
+    } yield resFiles
   }
+}

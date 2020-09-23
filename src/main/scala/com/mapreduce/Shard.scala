@@ -14,7 +14,7 @@ object Shard {
    * Shard the input file to be used by n workers for map and reduce.
    * Copy file line by line to intermediate files
    *
-   * TODO: Parse file prematurely to parallelize file copying with cats-effect fibers.
+   * TODO: Implement with fs2 to fix memory-large-file issues
    */
   def shard(inFileName: String, nWorkers: Int): IO[List[String]] = {
     val inFile = new File(inFileName)
