@@ -7,11 +7,11 @@ https://static.googleusercontent.com/media/research.google.com/en//archive/mapre
 
 Developed with Java 8 (Open JDK 1.8) and sbt version 1.3.13
 
-Clone...
+`git clone https://github.com/jrockett6/CatsMapReduce.git`
 
 Navigate to folder:
 
-`cd path/to/CatsMapReduce`
+`cd CatsMapReduce`
 
 Run MapReduce:
 
