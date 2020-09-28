@@ -20,7 +20,7 @@ number of reducers (and output files).
 
 and test your result:
 
-`python src/test/test-result.py resources/input/testdata_2.txt resources/result/` 
+`python src/test/test-result.py resources/input/testdata_1.txt resources/result/` 
 
 ### TODO
 - Currently `Reducer` uses `java.io.FileOutputStream` for writing intermediate files to results. I would like to
