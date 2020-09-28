@@ -1,6 +1,10 @@
 target
 project
 .idea
+.metals
+.vscode
 src/main/scala/worksheet.sc
 *.DS_Store
-resources/*
+resources/intermediate
+resources/result
+resources/shards

@@ -12,7 +12,7 @@ import java.util.concurrent.Executors
 object Master {
   implicit val contextShift: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
-  def run(shardFiles: List[String]): IO[Unit] = {
+  def run(shardFiles: List[String]): IO[List[String]] = {
     def getExecutionContext: Resource[IO, ExecutionContext] =
       Resource(IO {
         val executor = Executors.newCachedThreadPool()
@@ -61,7 +61,6 @@ object Master {
       intFiles <- map(shardFiles.reverse)
       intStreams = shuffle(intFiles)
       resFiles <- reduce(intStreams)
-      _ <- IO(println(resFiles))
     } yield resFiles
   }
 }

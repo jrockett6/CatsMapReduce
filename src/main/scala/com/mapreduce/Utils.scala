@@ -1,10 +1,27 @@
 package com.mapreduce
 
 import java.io.{BufferedReader, File, FileOutputStream, OutputStream, FileReader}
+import org.apache.commons.io.FileUtils
 
 import cats.effect.{IO, Resource}
+import cats.implicits._
 
 object Utils {
+  def rmDirs(dirList: List[String] = List("intermediate", "result", "shards")): IO[Unit] = {
+    val basePath = "resources/"
+    IO(dirList.foreach(dirName => {
+      val dir = new File(s"${basePath}${dirName}")
+      if (dir.exists() && dir.isDirectory) {
+        FileUtils.deleteDirectory(dir)
+      }
+    }))
+  }
+
+  def createDirs(dirList: List[String] = List("intermediate", "result", "shards")): IO[Unit] =
+    IO(dirList.foreach(dirName => new File(s"${"resources/"}${dirName}").mkdir()))
+
+  def setupDirs: IO[Unit] = rmDirs() >> createDirs()
+
   def fileReader(f: File): Resource[IO, BufferedReader] =
     Resource.make {
       IO(new BufferedReader(new FileReader(f)) )

@@ -1,7 +1,8 @@
 package com.mapreduce
 
 import cats.effect.{ExitCode, IO, IOApp}
-import Input.{ checkArgs, parseArgs}
+import Input.{checkArgs, parseArgs}
+import Utils.{setupDirs, rmDirs}
 import Shard.shard
 
 object Run extends IOApp {
@@ -12,8 +13,10 @@ object Run extends IOApp {
         case _ => ()
       }
       argMap = parseArgs(args)
+      _ <- setupDirs
       shards <- shard(argMap("--f").asInstanceOf[String], argMap("--n").asInstanceOf[Int])
       _ <- Master.run(shards)
+      _ <- rmDirs(List("intermediate", "shards"))
     } yield ExitCode.Success
 }
 

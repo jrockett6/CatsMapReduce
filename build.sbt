@@ -12,6 +12,7 @@ libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.0"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test"
 libraryDependencies += "co.fs2" %% "fs2-core" % "2.4.0"
 libraryDependencies += "co.fs2" %% "fs2-io" % "2.4.0"
+libraryDependencies += "commons-io" % "commons-io" % "2.8.0"
 
 scalacOptions ++= Seq(
   "-feature",

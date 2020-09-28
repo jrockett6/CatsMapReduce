@@ -9,16 +9,15 @@ import Utils.{fileReader, fileWriter}
 
 object Shard {
   private val basePath = "resources/shards/"
-
   /**
    * Shard the input file to be used by n workers for map and reduce.
    * Copy file line by line to intermediate files
    *
-   * TODO: Implement with fs2 to fix memory-large-file issues
+   * TODO: Implement with fs2 when partial word writing issue is fixed
    */
   def shard(inFileName: String, nWorkers: Int): IO[List[String]] = {
+    val shardLength = math.ceil(new File(inFileName).length.toFloat / nWorkers.toFloat).toInt
     val inFile = new File(inFileName)
-    val shardLength = math.ceil(inFile.length.toFloat / nWorkers.toFloat).toInt
 
     def writeShard(br: BufferedReader, fos: FileOutputStream, acc: Long, bytesToRead: Long): IO[Long] =
       for {
@@ -36,17 +35,20 @@ object Shard {
           }
       } yield tot
 
-    def split(br: BufferedReader, shardCount: Int, bytesRead: Long, bytesToRead: Long, shardNames: List[String]): IO[List[String]] = {
+    def split(br: BufferedReader, shardCount: Int, bytesRead: Long, bytesToRead: Long, newBytesRead: Long, shardNames: List[String]): IO[List[String]] = {
       if (bytesRead >= bytesToRead) IO(shardNames)
       else {
         val shardName = basePath + "shard" + shardCount.toString
         val outFile = new File(shardName)
         fileWriter(outFile)
           .use(fos => writeShard(br, fos, 0, shardLength)
-            >>= (n => split(br, shardCount + 1, bytesRead + n, bytesToRead, shardNames.prepended(shardName))))
+            >>= (n => {
+            if (n == 0) IO(shardNames)
+            else split(br, shardCount + 1, bytesRead + n, bytesToRead, n, shardNames.prepended(shardName))
+          }))
       }
     }
 
-    fileReader(inFile).use(br => split(br, 0, 0, inFile.length, List[String]()))
+    fileReader(inFile).use(br => split(br, 0, 0, inFile.length, -1, List[String]()))
   }
 }
