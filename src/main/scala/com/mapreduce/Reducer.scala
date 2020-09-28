@@ -6,6 +6,7 @@ import cats.implicits._
 
 import scala.collection.immutable.SortedMap
 import java.io.File
+import java.lang.Thread
 
 import Utils.fileWriter
 import external.ReducerImpl
@@ -57,6 +58,7 @@ case class Reducer(intStream: Stream[IO, String], reducerNum: Int) {
     for {
       r <- streamToReducedString
       _ <- writeRes(r)
+      _ <- IO(println(s"INFO: Finished reducer ${reducerNum} on thread ID ${Thread.currentThread().getId()}"))
     } yield outPath
   }
 }

@@ -7,6 +7,7 @@ import scala.concurrent.ExecutionContext
 
 import java.io.File
 import java.nio.file.Paths
+import java.lang.Thread
 
 import external.MapperImpl
 import Utils.fileWriterVec
@@ -41,7 +42,9 @@ case class Mapper(shardName: String, mapperNum: Int, nReducers: Int) {
         .through(text.lines)
         .map(s => (s.hashCode.abs % nReducers, s"${s}\n"))
         .map { case (hash, s) => writerHandles(hash).write(s.getBytes) }
-    }.compile.drain >> IO(intFileNames)
+    }.compile.drain >>
+      IO(println(s"INFO: Finished mapper ${mapperNum} on thread ID ${Thread.currentThread().getId()}")) >>
+        IO(intFileNames)
   }
 }
 

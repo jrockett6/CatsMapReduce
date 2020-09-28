@@ -29,10 +29,9 @@ object Master {
     def map(shardFiles: List[String]): IO[List[List[String]]] = getExecutionContext.use { ec =>
       shardFiles
         .zipWithIndex
-        .map { case (file, n) => {
+        .parTraverse { case (file, n) =>
           val mapper = Mapper(file, n, shardFiles.length)
-          contextShift.evalOn(ec)(mapper.map) } }
-        .sequence
+          contextShift.evalOn(ec)(IO(println(s"INFO: Starting mapper ${n} . . .")) >> mapper.map) }
       }
 
     /**
@@ -51,15 +50,17 @@ object Master {
     def reduce(intStreams: List[Stream[IO, String]]): IO[List[String]] = getExecutionContext.use { ec =>
       intStreams
         .zipWithIndex
-        .map { case (stream, n) => {
+        .parTraverse { case (stream, n) => {
           val reducer = Reducer(stream, n)
-          contextShift.evalOn(ec)(reducer.reduce) } }
-        .sequence
+          contextShift.evalOn(ec)(IO(println(s"INFO: Starting reducer ${n} . . .")) >> reducer.reduce) } }
     }
 
     for {
+      _ <- IO(println("\nINFO: Mapping"))
       intFiles <- map(shardFiles.reverse)
+      _ <- IO(println("\nINFO: Shuffling intermediate files . . ."))
       intStreams = shuffle(intFiles)
+      _ <- IO(println("\nINFO: Reducing"))
       resFiles <- reduce(intStreams)
     } yield resFiles
   }
